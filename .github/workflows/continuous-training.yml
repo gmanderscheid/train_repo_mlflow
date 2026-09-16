@@ -66,6 +66,10 @@ jobs:
         run: |
           cat > user-data.sh << EOF
           #!/bin/bash
+          # La machine doit TOUJOURS s'éteindre (succès ou échec), sinon un
+          # crash silencieux la laisse tourner indéfiniment (coûts + le
+          # workflow attend une terminaison qui n'arrive jamais).
+          trap 'shutdown -h now' EXIT
           set -e
           dnf install -y docker
           systemctl start docker
@@ -78,10 +82,6 @@ jobs:
             -e TUNE="${{ inputs.tune || 'true' }}" \
             -e REGISTER_ALIAS="${{ inputs.register_alias || 'challenger' }}" \
             $IMAGE_NAME
-
-          # L'entraînement est fini : la machine s'éteint,
-          # et AWS la TERMINE (cf. --instance-initiated-shutdown-behavior)
-          shutdown -h now
           EOF
 
       - name: Lancer l'instance EC2
